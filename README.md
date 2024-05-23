@@ -51,3 +51,9 @@ The Project teached me new things as using threading for a more responsive gui, 
 | [Manrope](https://fonts.google.com/specimen/Manrope) |
 | [JetBrains Mono](https://www.jetbrains.com/lp/mono/) |
 
+
+# Credits
+| Data Type | Source |
+| ------------- | ------------- |
+| IP & Geo Data | [BrowserLeaks](https://browserleaks.com) |
+| Flag PNGs | [FlagsAPI](https://flagsapi.com/) |
