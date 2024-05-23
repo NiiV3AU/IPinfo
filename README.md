@@ -57,3 +57,4 @@ The Project teached me new things as using threading for a more responsive gui, 
 | ------------- | ------------- |
 | IP & Geo Data | [BrowserLeaks](https://browserleaks.com) |
 | Flag PNGs | [FlagsAPI](https://flagsapi.com/) |
+| Fonts | __Look north__ |
