@@ -7,11 +7,13 @@ import os
 from threading import Thread
 from time import sleep as sleep
 
+
 BG_COLOR = "#333333"
 DBG_COLOR = "#2b2b2b"
 FG_COLOR = "#45e876"
+BHVR_COLOR = "#36543F"
 
-ctk.set_appearance_mode("system")
+ctk.set_appearance_mode("dark")
 
 root = ctk.CTk()
 root.title("IPinfo")
@@ -42,48 +44,114 @@ copyright_label = ctk.CTkLabel(
     master=root,
     font=CREDITS_FONT,
     text_color=BG_COLOR,
-    text="Data: BrowserLeaks.com\nFlags: flagsapi.com\nFonts: Manrope and JetBrains Mono\nGUI by NV3 aka NiiV3AU",
+    text="↣ Click Here for Credits ↢\n⋉ © NV3 ⋊\n{ v1.0.1 }",
     bg_color="transparent",
     fg_color=DBG_COLOR,
-    height=40,
+    justify="center",
 )
 copyright_label.pack(pady=10, fill="both", expand=False, anchor="n", side="top")
 
+api_label = ctk.CTkLabel(
+    master=root,
+    font=SMALL_BOLD_FONT,
+    text_color="#DCE4EE",
+    text="Choose API:",
+    bg_color="transparent",
+    fg_color=DBG_COLOR,
+    height=10,
+    justify="center",
+)
+api_label.pack(pady=5, fill="x", expand=False, anchor="n", side="top")
 
+
+api_option_menu = ctk.CTkSegmentedButton(
+    master=root,
+    text_color=DBG_COLOR,
+    values=["BrowserLeaks", "IP2Location", "ipify"],
+    fg_color=BG_COLOR,
+    selected_color=FG_COLOR,
+    selected_hover_color=BHVR_COLOR,
+    unselected_hover_color=BHVR_COLOR,
+    unselected_color=BG_COLOR,
+    font=SMALL_BOLD_FONT,
+    corner_radius=10,
+)
+api_option_menu.pack(pady=5, padx=30, fill=None, expand=False, anchor="n", side="top")
+api_option_menu.set("BrowserLeaks")
+api_var = api_option_menu.get()
+
+
+# open the project repo on github in a new tab in your default browser
 def open_github(e):
     import webbrowser
 
     webbrowser.open_new_tab("https://github.com/NiiV3AU/IPinfo")
 
 
-# scrape ip address (only IPv4 for the time being) from browserleaks.com
 def get_ip(progress_callback):
-    url = "https://browserleaks.com/ip"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-    ip_address = soup.find("span", {"id": "client-ipv4"})["data-ip"]
-    progress_callback(0.33)
-    return ip_address
+    # scrape ip address (only IPv4 for the time being) from browserleaks.com
+    if api_var == "BrowserLeaks":
+        url = "https://browserleaks.com/ip"
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, "html.parser")
+        ip_address = soup.find("span", {"id": "client-ipv4"})["data-ip"]
+        progress_callback(0.33)
+        return ip_address
+
+    # call IP2Location's api for IPv4
+    elif api_var == "IP2Location":
+        url = "https://api.ip2location.io/"
+        response = requests.get(url)
+        global data
+        data = response.json()
+        ip_address = data.get("ip")
+        progress_callback(0.33)
+        return ip_address
+
+    # call ipify's api for IPv4
+    elif api_var == "ipify":
+        url = "https://api.ipify.org"
+        response = requests.get(url).text
+        ip_address = str(response)
+        progress_callback(0.33)
+        return ip_address
+    else:
+        progress_callback(0.33)
+        return "Unexpected Error"
 
 
-# scrape geolocation aka Country Code from browserleaks.com
 def get_geo(progress_callback):
-    url = "https://browserleaks.com/ip"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-    geolocation = soup.find("span", {"id": "client-ipv4"})["data-iso_code"]
-    progress_callback(0.66)
-    return geolocation
+    # scrape geolocation aka Country Code from browserleaks.com
+    if api_var == "BrowserLeaks":
+        url = "https://browserleaks.com/ip"
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, "html.parser")
+        geolocation = soup.find("span", {"id": "client-ipv4"})["data-iso_code"]
+        progress_callback(0.66)
+        return geolocation
+
+    # call IP2Location's api for geolocation aka Country Code (also if ipify is selected because ipify has only ip api support without registration)
+    elif api_var == "IP2Location" or "ipify":
+        geolocation = data.get("country_code")
+        progress_callback(0.66)
+        return geolocation
+
+    else:
+        progress_callback(0.66)
+        return "Unexpected Error"
 
 
+# checks if flag_cache (folder for flags) exists
+# if not then its automatically creates one
 FLAG_CACHE_DIR = "flag_cache"
 if not os.path.exists(FLAG_CACHE_DIR):
     os.makedirs(FLAG_CACHE_DIR)
 
+
 flag_image = None
 
 
-# Funktion zum Abrufen der Flagge
+# get the flag.png with the help of the geolocation
 def get_flag(country_code, progress_callback):
     filename = os.path.join(FLAG_CACHE_DIR, f"{country_code}_flag.png")
     if os.path.exists(filename):
@@ -178,6 +246,7 @@ def update_gui():
     bar_to_btn(progress_callback)
 
 
+# replaces update_button with the progressbar
 def btn_to_bar():
     ip_label.configure(text="IP Address: loading...")
     geo_label.configure(text="Geolocation: loading...")
@@ -188,6 +257,7 @@ def btn_to_bar():
     start_update.start()
 
 
+# above step in reverse
 def bar_to_btn(progress_callback):
     progress_bar.pack_forget()
     progress_callback(0)
@@ -247,6 +317,7 @@ update_button = ctk.CTkButton(
 update_button.pack(expand=True, side="bottom", fill="x", anchor="s")
 
 
+# update_button animation
 def update_button_ani():
     while True:
         update_button.configure(text="⁕ ⁕ ⁕     Click to refresh     ⁕ ⁕ ⁕")
@@ -259,12 +330,14 @@ def update_button_ani():
         sleep(0.2)
 
 
+# function to start all animations in two threads
 def master_ani_start():
     Thread(target=update_button_ani).start()
     Thread(target=copyright_label_ani_master).start()
 
 
-root.after(50, master_ani_start)
+# starts the above function after 0.25 sec
+root.after(250, master_ani_start)
 
 
 progress_bar = ctk.CTkProgressBar(
